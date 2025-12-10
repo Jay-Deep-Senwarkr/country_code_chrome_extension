@@ -359,6 +359,179 @@
       color: #1e293b;
       font-size: 14px;
     }
+
+    /* Dark Mode Toggle */
+    .theme-toggle {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.95);
+    }
+
+    .toggle-icon {
+      width: 20px;
+      height: 20px;
+      color: white;
+      transition: transform 0.3s ease;
+    }
+
+    .theme-toggle:hover .toggle-icon {
+      transform: rotate(20deg);
+    }
+
+    /* Dark Mode Styles */
+    body.dark-mode {
+      background: #0f172a;
+    }
+
+    .dark-mode .app-container {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+
+    .dark-mode .header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+
+    .dark-mode .search-input {
+      background: rgba(30, 41, 59, 0.95);
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .dark-mode .search-input:focus {
+      background: #1e293b;
+      border-color: rgba(148, 163, 184, 0.4);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .dark-mode .search-input::placeholder {
+      color: #64748b;
+    }
+
+    .dark-mode .search-icon {
+      color: #818cf8;
+    }
+
+    .dark-mode .results-container {
+      background: linear-gradient(to bottom, #0f172a, #020617);
+    }
+
+    .dark-mode .results-container::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+
+    .dark-mode .results-container::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+
+    .dark-mode .results-container::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    .dark-mode .empty-state {
+      color: #94a3b8;
+    }
+
+    .dark-mode .empty-icon {
+      color: #475569;
+    }
+
+    .dark-mode .empty-title {
+      color: #cbd5e1;
+    }
+
+    .dark-mode .empty-subtitle {
+      color: #64748b;
+    }
+
+    .dark-mode .country-card {
+      background: #1e293b;
+      border-color: #334155;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .dark-mode .country-card:hover {
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3);
+      border-color: #475569;
+    }
+
+    .dark-mode .country-info h2 {
+      color: #f1f5f9;
+    }
+
+    .dark-mode .capital-row {
+      color: #94a3b8;
+    }
+
+    .dark-mode .time-display {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-color: #334155;
+    }
+
+    .dark-mode .time-display::before {
+      background: linear-gradient(90deg, #818cf8, #6366f1);
+    }
+
+    .dark-mode .time-label-text {
+      color: #cbd5e1;
+    }
+
+    .dark-mode .time-value {
+      color: #818cf8;
+    }
+
+    .dark-mode .time-icon {
+      stroke: #818cf8;
+    }
+
+    .dark-mode .detail-item {
+      background: #0f172a;
+      border-color: #334155;
+    }
+
+    .dark-mode .detail-item:hover {
+      background: #1e293b;
+      border-color: #475569;
+    }
+
+    .dark-mode .detail-label {
+      color: #94a3b8;
+    }
+
+    .dark-mode .detail-value {
+      color: #e2e8f0;
+    }
+
+    /* Smooth theme transition */
+    body,
+    .app-container,
+    .header,
+    .search-input,
+    .results-container,
+    .country-card,
+    .time-display,
+    .detail-item {
+      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
   </style>
 </head>
 <body>
