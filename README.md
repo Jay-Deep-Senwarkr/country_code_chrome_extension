@@ -292,10 +292,10 @@ This extension:
 
 ## 🌟 Show Your Support
 
-Give a ⭐️ if this project helped you!
-
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/country-time-finder&type=Date)](https://star-history.com/#yourusername/country-time-finder&Date)
-
----
-
-Made with ❤️ for the global community | © 2024 Country Time Finder
+<a href="https://www.star-history.com/#Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&legend=top-left" />
+ </picture>
+</a>
