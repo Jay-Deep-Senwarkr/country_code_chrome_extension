@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Country Time Finder",
+  "version": "1.0",
+  "description": "Search countries by code, name, or phone code and see their current time",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": []
+}
