@@ -2,16 +2,78 @@ let searchQuery = '';
 let results = [];
 let timeUpdateInterval;
 let searchDebounceTimer;
+let isDarkMode = false;
 
 function init() {
   renderApp();
-  const searchInput = document.getElementById('search-input');
-  searchInput.addEventListener('input', handleSearch);
-  searchInput.focus();
+  loadThemePreference();
+  
+  // Add event listeners after DOM is rendered
+  setTimeout(() => {
+    const searchInput = document.getElementById('search-input');
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    if (searchInput) {
+      searchInput.addEventListener('input', handleSearch);
+      searchInput.focus();
+    }
+    
+    if (themeToggle) {
+      themeToggle.addEventListener('click', toggleTheme);
+    }
+  }, 0);
+}
+
+function loadThemePreference() {
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.local.get(['darkMode'], (result) => {
+      isDarkMode = result.darkMode || false;
+      applyTheme();
+    });
+  } else {
+    // Fallback to localStorage if chrome.storage is not available
+    isDarkMode = localStorage.getItem('darkMode') === 'true';
+    applyTheme();
+  }
+}
+
+function toggleTheme() {
+  isDarkMode = !isDarkMode;
+  
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.local.set({ darkMode: isDarkMode });
+  } else {
+    localStorage.setItem('darkMode', isDarkMode);
+  }
+  
+  applyTheme();
+}
+
+function applyTheme() {
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  
+  // Update toggle icon
+  const sunIcon = document.getElementById('sun-icon');
+  const moonIcon = document.getElementById('moon-icon');
+  if (sunIcon && moonIcon) {
+    if (isDarkMode) {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    } else {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    }
+  }
 }
 
 function handleSearch(e) {
   searchQuery = e.target.value;
+  
+  // Debounce search for better performance
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
     performSearch();
@@ -90,9 +152,31 @@ function getCurrentTime(timezone) {
 }
 
 function renderApp() {
-  document.body.innerHTML = `
+  const root = document.getElementById('root');
+  if (!root) {
+    console.error('Root element not found');
+    return;
+  }
+  
+  root.innerHTML = `
     <div class="app-container">
       <div class="header">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
+          <svg id="moon-icon" class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg id="sun-icon" class="toggle-icon" style="display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
         <div class="header-content">
           <div class="title-row">
             <svg class="globe-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
