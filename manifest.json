@@ -1,10 +1,35 @@
 {
   "manifest_version": 3,
   "name": "Country Time Finder",
-  "version": "1.0",
-  "description": "Search countries by code, name, or phone code and see their current time",
-  "action": {
-    "default_popup": "popup.html"
+  "version": "1.0.0",
+  "description": "Instantly search 240+ countries by name, code, or phone number. View real-time local times, phone codes, ISO codes, and more. Beautiful dark mode included.",
+  "author": "Jaydeep",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
-  "permissions": ["storage"]
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Country Time Finder"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://app.hubspot.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://app.hubspot.com/contacts/*"],
+      "js": ["countrycode.js", "content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }

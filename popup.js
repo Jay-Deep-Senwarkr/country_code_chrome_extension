@@ -4,9 +4,16 @@ let timeUpdateInterval;
 let searchDebounceTimer;
 let isDarkMode = false;
 
+// Reference time zones
+const REFERENCE_TIMEZONES = {
+  'India (IST)': 'Asia/Kolkata',
+  'US (EST)': 'America/New_York',
+  'UK (GMT)': 'Europe/London'
+};
+
 function init() {
   renderApp();
-  loadThemePreference();
+  detectSystemTheme();
   
   // Add event listeners after DOM is rendered
   setTimeout(() => {
@@ -24,26 +31,64 @@ function init() {
   }, 0);
 }
 
-function loadThemePreference() {
+function detectSystemTheme() {
+  // Check if user has a saved preference first
   if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get(['darkMode'], (result) => {
-      isDarkMode = result.darkMode || false;
+    chrome.storage.local.get(['darkMode', 'themePreferenceSet'], (result) => {
+      if (result.themePreferenceSet) {
+        // User has manually set a preference
+        isDarkMode = result.darkMode || false;
+      } else {
+        // Use system preference
+        isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
       applyTheme();
     });
   } else {
-    // Fallback to localStorage if chrome.storage is not available
-    isDarkMode = localStorage.getItem('darkMode') === 'true';
+    // Fallback to localStorage
+    const preferenceSet = localStorage.getItem('themePreferenceSet');
+    if (preferenceSet === 'true') {
+      isDarkMode = localStorage.getItem('darkMode') === 'true';
+    } else {
+      isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
     applyTheme();
+  }
+  
+  // Listen for system theme changes
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      // Only update if user hasn't manually set a preference
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['themePreferenceSet'], (result) => {
+          if (!result.themePreferenceSet) {
+            isDarkMode = e.matches;
+            applyTheme();
+          }
+        });
+      } else {
+        const preferenceSet = localStorage.getItem('themePreferenceSet');
+        if (preferenceSet !== 'true') {
+          isDarkMode = e.matches;
+          applyTheme();
+        }
+      }
+    });
   }
 }
 
 function toggleTheme() {
   isDarkMode = !isDarkMode;
   
+  // Mark that user has manually set a preference
   if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.set({ darkMode: isDarkMode });
+    chrome.storage.local.set({ 
+      darkMode: isDarkMode,
+      themePreferenceSet: true 
+    });
   } else {
     localStorage.setItem('darkMode', isDarkMode);
+    localStorage.setItem('themePreferenceSet', 'true');
   }
   
   applyTheme();
@@ -67,6 +112,149 @@ function applyTheme() {
       sunIcon.style.display = 'none';
       moonIcon.style.display = 'block';
     }
+  }
+}
+
+function getTimezoneCategory(country) {
+  try {
+    const now = new Date();
+    
+    // Get current hour in India (IST)
+    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const istHour = istTime.getHours();
+    const istMinute = istTime.getMinutes();
+    
+    // Get current hour in UK (GMT)
+    const gmtTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+    const gmtHour = gmtTime.getHours();
+    const gmtMinute = gmtTime.getMinutes();
+    
+    // Get current hour in US (EST)
+    const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const estHour = estTime.getHours();
+    const estMinute = estTime.getMinutes();
+    
+    // Get current hour in the country
+    const countryTime = new Date(now.toLocaleString('en-US', { timeZone: country['Time Zone in Capital'] }));
+    const countryHour = countryTime.getHours();
+    const countryMinute = countryTime.getMinutes();
+    
+    // Calculate time differences in hours (with decimal for minutes)
+    const countryTimeInHours = countryHour + (countryMinute / 60);
+    const istTimeInHours = istHour + (istMinute / 60);
+    const gmtTimeInHours = gmtHour + (gmtMinute / 60);
+    const estTimeInHours = estHour + (estMinute / 60);
+    
+    let diffFromIST = countryTimeInHours - istTimeInHours;
+    let diffFromGMT = countryTimeInHours - gmtTimeInHours;
+    let diffFromEST = countryTimeInHours - estTimeInHours;
+    
+    // Normalize differences to -12 to +12 range
+    if (diffFromIST > 12) diffFromIST -= 24;
+    if (diffFromIST < -12) diffFromIST += 24;
+    
+    if (diffFromGMT > 12) diffFromGMT -= 24;
+    if (diffFromGMT < -12) diffFromGMT += 24;
+    
+    if (diffFromEST > 12) diffFromEST -= 24;
+    if (diffFromEST < -12) diffFromEST += 24;
+    
+    // Find the closest timezone (smallest absolute difference)
+    const absDiffFromIST = Math.abs(diffFromIST);
+    const absDiffFromGMT = Math.abs(diffFromGMT);
+    const absDiffFromEST = Math.abs(diffFromEST);
+    
+    const minDiff = Math.min(absDiffFromIST, absDiffFromGMT, absDiffFromEST);
+    
+    if (minDiff === absDiffFromIST) {
+      return ['India (IST)'];
+    } else if (minDiff === absDiffFromGMT) {
+      return ['UK (GMT)'];
+    } else {
+      return ['US (EST)'];
+    }
+  } catch (e) {
+    console.error('Error in getTimezoneCategory:', e);
+    return [];
+  }
+}
+
+function getHoursUntilBusinessHours(country) {
+  try {
+    const now = new Date();
+    const countryTime = new Date(now.toLocaleString('en-US', { timeZone: country['Time Zone in Capital'] }));
+    const countryHour = countryTime.getHours();
+    const countryMinute = countryTime.getMinutes();
+    
+    // If currently in business hours (10 AM - 7 PM)
+    if (countryHour >= 10 && countryHour < 19) {
+      return null; // Already in business hours
+    }
+    
+    // Calculate hours until 10 AM
+    let hoursUntil;
+    let minutesUntil;
+    
+    if (countryHour < 10) {
+      // Before 10 AM today
+      hoursUntil = 10 - countryHour;
+      minutesUntil = -countryMinute;
+      if (minutesUntil < 0) {
+        hoursUntil -= 1;
+        minutesUntil += 60;
+      }
+    } else {
+      // After 7 PM, so next business hours is 10 AM tomorrow
+      hoursUntil = (24 - countryHour) + 10;
+      minutesUntil = -countryMinute;
+      if (minutesUntil < 0) {
+        hoursUntil -= 1;
+        minutesUntil += 60;
+      }
+    }
+    
+    // Format the message
+    if (hoursUntil === 0 && minutesUntil > 0) {
+      return `in ${minutesUntil} minute${minutesUntil !== 1 ? 's' : ''}`;
+    } else if (minutesUntil === 0) {
+      return `in ${hoursUntil} hour${hoursUntil !== 1 ? 's' : ''}`;
+    } else {
+      return `in ${hoursUntil}h ${minutesUntil}m`;
+    }
+  } catch (e) {
+    console.error('Error in getHoursUntilBusinessHours:', e);
+    return null;
+  }
+}
+
+function getAvailableTimezones(country) {
+  try {
+    const now = new Date();
+    const countryTime = new Date(now.toLocaleString('en-US', { timeZone: country['Time Zone in Capital'] }));
+    const countryHour = countryTime.getHours();
+    
+    // Get the timezone category
+    const category = getTimezoneCategory(country);
+    
+    // Check if country is currently in business hours (10 AM - 7 PM)
+    const isInBusinessHours = countryHour >= 10 && countryHour < 19;
+    
+    // Get hours until business hours if not currently in them
+    const hoursUntil = isInBusinessHours ? null : getHoursUntilBusinessHours(country);
+    
+    // Return category with business hours status
+    return {
+      category: category,
+      inBusinessHours: isInBusinessHours,
+      hoursUntil: hoursUntil
+    };
+  } catch (e) {
+    console.error('Error in getAvailableTimezones:', e);
+    return {
+      category: [],
+      inBusinessHours: false,
+      hoursUntil: null
+    };
   }
 }
 
@@ -244,7 +432,13 @@ function renderResults() {
     return;
   }
   
-  container.innerHTML = results.map((country, index) => `
+  container.innerHTML = results.map((country, index) => {
+    const timezoneData = getAvailableTimezones(country);
+    const availableTimezones = timezoneData.category;
+    const inBusinessHours = timezoneData.inBusinessHours;
+    const hoursUntil = timezoneData.hoursUntil;
+    
+    return `
     <div class="country-card" style="animation-delay: ${index * 0.05}s">
       <div class="country-header">
         <div class="country-info">
@@ -273,6 +467,37 @@ function renderResults() {
         </div>
       </div>
       
+      ${availableTimezones.length > 0 ? `
+      <div class="available-timezones ${!inBusinessHours ? 'unavailable' : ''}">
+        <div class="tz-header">
+          <svg class="tz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span class="tz-title">${inBusinessHours ? 'Currently in Business Hours (10AM-7PM)' : 'Timezone Category'}</span>
+        </div>
+        <div class="tz-badges">
+          ${availableTimezones.map(tz => `
+            <span class="tz-badge ${tz.includes('India') ? 'tz-india' : tz.includes('US') ? 'tz-us' : 'tz-uk'}">
+              ${tz.includes('India') ? '🇮🇳' : tz.includes('US') ? '🇺🇸' : '🇬🇧'} ${tz}
+            </span>
+          `).join('')}
+        </div>
+        ${!inBusinessHours && hoursUntil ? `<div style="font-size: 12px; color: #64748b; margin-top: 8px; font-weight: 600;">⏰ Business hours start ${hoursUntil}</div>` : ''}
+      </div>
+      ` : `
+      <div class="available-timezones unavailable">
+        <div class="tz-header">
+          <svg class="tz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <span class="tz-title">Timezone information unavailable</span>
+        </div>
+      </div>
+      `}
+      
       <div class="details-grid">
         <div class="detail-item">
           <div class="detail-label">ISO3 Code</div>
@@ -292,7 +517,7 @@ function renderResults() {
         </div>
       </div>
     </div>
-  `).join('');
+  `}).join('');
   
   // Update time every second
   timeUpdateInterval = setInterval(() => {

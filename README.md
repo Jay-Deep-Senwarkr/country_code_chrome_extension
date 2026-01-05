@@ -1,301 +1,187 @@
-# 🌍 Country Time Finder - Chrome Extension
+# Country Time Finder - HubSpot Phone Number Detector
 
-A beautiful and modern Chrome extension that helps you search for countries and view their current local time in real-time. Perfect for travelers, remote workers, and anyone dealing with international time zones!
+An enhanced Chrome extension that automatically detects phone numbers on HubSpot contact pages and displays timezone information with business hours availability.
 
-![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?style=for-the-badge&logo=google-chrome)
-![Version](https://img.shields.io/badge/version-1.0-green?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge)
+## 🎯 Features
 
-## ✨ Features
+### Original Features:
+- Search 240+ countries by name, code, or phone number
+- View real-time local times for any country
+- Check business hours availability (10 AM - 7 PM)
+- Beautiful dark mode support
+- ISO codes, phone codes, and more
 
-- 🔍 **Smart Search** - Search by country name, capital, ISO codes (ISO2/ISO3), phone codes, or domain extensions
-- ⏰ **Real-Time Clock** - See the current local time in any country, updating every second
-- 🌙 **Dark Mode** - Toggle between light and dark themes with persistent preference saving
-- 🎨 **Beautiful UI** - Modern gradient design with smooth animations and transitions
-- 📱 **Comprehensive Data** - Access to phone codes, ISO codes, timezones, capitals, and more
-- ⚡ **Fast & Responsive** - Debounced search with optimized performance (150ms delay)
-- 🌐 **240+ Countries** - Complete database of all countries worldwide
-- 💾 **Theme Persistence** - Your dark/light mode preference is automatically saved
-- 🎯 **Smooth Animations** - Card animations, rotating globe, pulsing clock, and floating bubbles
+### NEW: HubSpot Integration 🆕
+- **Automatic phone number detection** on HubSpot contact pages
+- **Instant timezone notifications** when viewing contact records
+- **Business hours status** - see if it's a good time to call
+- **Smart country code parsing** from formats like:
+  - `33-614956164` (France)
+  - `380-631234567` (Ukraine)
+  - `+39-3293331477` (Italy)
 
-## 🖼️ Screenshots
+## 📥 Installation
 
-### Light Mode
-![Light Mode Search](./screenshots/light-mode.png)
-*Clean, modern search interface with purple gradient header*
+### Method 1: Load Unpacked Extension (for testing)
 
-### Dark Mode
-![Dark Mode](./screenshots/dark-mode.png)
-*Elegant dark theme for comfortable nighttime use*
+1. **Download all extension files** to a folder on your computer
+2. **Open Chrome** and go to `chrome://extensions/`
+3. **Enable "Developer mode"** (toggle in top-right corner)
+4. Click **"Load unpacked"**
+5. Select the folder containing the extension files
+6. The extension is now installed! 🎉
 
-### Country Results
-![Country Results](./screenshots/results.png)
-*Detailed country cards with real-time local time display*
+### Method 2: Create Extension Package
 
-## 🚀 Installation
+1. Zip all the extension files together
+2. Rename to `.crx` if needed
+3. Install via Chrome extensions page
 
-### From Chrome Web Store
-*(Coming Soon)*
+## 📋 Required Files
 
-### Manual Installation
-
-1. **Download the extension**
-   ```bash
-   git clone https://github.com/yourusername/country-time-finder.git
-   cd country-time-finder
-   ```
-
-2. **Open Chrome Extensions**
-   - Navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top-right corner)
-
-3. **Load the extension**
-   - Click "Load unpacked"
-   - Select the `country-time-finder` folder
-
-4. **Start using!**
-   - Click the extension icon in your Chrome toolbar
-   - Start searching for countries
-   - Toggle dark mode with the moon/sun icon
-
-## 📖 How to Use
-
-### Search Methods
-
-1. **By Country Name**
-   - Type: `Japan`, `United States`, `India`
-
-2. **By Capital City**
-   - Type: `Tokyo`, `Washington`, `New Delhi`
-
-3. **By Phone Code**
-   - Type: `+1`, `+44`, `+91`, `60`
-
-4. **By ISO Code**
-   - Type: `US`, `GB`, `IN` (ISO2)
-   - Type: `USA`, `GBR`, `IND` (ISO3)
-
-5. **By Domain Extension**
-   - Type: `.com`, `.uk`, `.jp`, `in`
-
-### Example Searches
-```
-Afghanistan     → Shows Afghanistan details
-+60             → Shows Malaysia (phone code)
-MY              → Shows Malaysia (ISO2 code)
-.in             → Shows India (domain)
-Tokyo           → Shows Japan (capital)
-```
-
-### Dark Mode
-- Click the **moon icon** 🌙 in the top-right to enable dark mode
-- Click the **sun icon** ☀️ to return to light mode
-- Your preference is automatically saved and persists across sessions
-
-## 🛠️ Technical Details
-
-### Built With
-
-- **Manifest V3** - Latest Chrome Extension standard
-- **Vanilla JavaScript** - No frameworks, pure performance
-- **CSS3** - Modern animations, gradients, and transitions
-- **HTML5** - Semantic markup
-- **Chrome Storage API** - Theme preference persistence
-
-### File Structure
+Make sure you have all these files in your extension folder:
 
 ```
-country-time-finder/
-├── manifest.json          # Extension configuration with storage permission
-├── popup.html            # Main UI with embedded CSS (all styles inline)
-├── popup.js              # Search logic, UI rendering, and dark mode toggle
-├── countrycode.js        # Country database (240+ countries)
-├── screenshots/          # Screenshots for README
-│   ├── light-mode.png
-│   ├── dark-mode.png
-│   └── results.png
-└── README.md            # Documentation
+country-time-finder-extension/
+├── manifest.json          (Extension configuration)
+├── background.js          (Background service worker)
+├── content.js            (NEW - HubSpot page monitor)
+├── popup.html            (Extension popup interface)
+├── popup.js              (Popup functionality)
+├── countrycode.js        (Country database)
+└── icons/                (Extension icons - add your own)
+    ├── icon16.png
+    ├── icon32.png
+    ├── icon48.png
+    └── icon128.png
 ```
 
-### Key Features Implementation
+**Note:** You'll need to add your own icon images in the `icons/` folder, or remove the icon references from `manifest.json`.
 
-- ✅ **Debounced Search**: 150ms delay for optimal performance
-- ✅ **Real-time Updates**: Clock updates every second with time zones
-- ✅ **Smooth Animations**: CSS transitions and keyframes
-- ✅ **Responsive Design**: Adapts to different screen sizes
-- ✅ **Custom Scrollbar**: Styled scrollbar matching both themes
-- ✅ **Dark Mode**: Complete dark theme with saved preferences
-- ✅ **Theme Persistence**: Uses Chrome Storage API with localStorage fallback
-- ✅ **Result Limiting**: Max 20 results to prevent performance issues
-- ✅ **Error Handling**: Graceful fallbacks for invalid timezones
-- ✅ **Auto-focus**: Search input automatically focused on open
+## 🚀 How to Use
 
-### Dark Mode Implementation
+### On HubSpot Contact Pages:
 
-The extension includes a fully functional dark mode with:
-- **Persistent Storage**: Preference saved using Chrome Storage API
-- **Smooth Transitions**: All elements transition smoothly (0.3s)
-- **Complete Coverage**: Header, cards, scrollbar, all themed
-- **Toggle Button**: Elegant moon/sun icon with hover effects
-- **Fallback Support**: Uses localStorage if Chrome Storage unavailable
+1. Navigate to a HubSpot contact record: `https://app.hubspot.com/contacts/YOUR_ID/record/0-1`
+2. If the page contains a phone number with a country code (like `33-614956164`), the extension will automatically:
+   - Detect the country code (33 = France)
+   - Show a notification with:
+     - Country name and flag
+     - Capital city
+     - Current local time
+     - Business hours status (✅ Available or ⏰ Outside hours)
+     - Closest timezone reference (India/US/UK)
 
-## 📊 Country Data Includes
+### Using the Extension Popup:
 
-Each country entry contains:
-- 🏳️ Country Name
-- 🏛️ Capital City
-- 📞 Phone Code (with + prefix)
-- 🔤 ISO2/ISO3 Codes
-- 🌐 Top Level Domain
-- 🕐 Timezone (with real-time clock)
-- 📍 Continent
-- 💱 Currency
-- 🗣️ Languages
-- 📏 Area in KM²
-- 📊 GDP Data
-- 🌍 GeoName ID
+1. Click the extension icon in Chrome toolbar
+2. Search for any country by:
+   - Country name (e.g., "France", "India")
+   - Phone code (e.g., "+33", "91")
+   - ISO code (e.g., "FR", "IN")
+   - Domain (e.g., ".fr", ".in")
+3. View detailed timezone and contact information
 
-## 🎨 Design Highlights
+## 🎨 Features Explained
 
-### Light Mode
-- **Purple Gradient Theme** - Modern and professional (#667eea to #764ba2)
-- **Animated Elements** - Rotating globe, pulsing clock, floating bubbles
-- **Card-based Layout** - Clean organization with shadow effects
-- **Hover Effects** - Cards lift up on hover (4px transform)
-- **Custom Typography** - Apple system fonts for optimal readability
+### Phone Number Detection Formats
 
-### Dark Mode
-- **Dark Slate Theme** - Easy on the eyes (#0f172a, #1e293b)
-- **Purple Accents** - Maintained brand colors (#818cf8)
-- **Adjusted Contrast** - Optimized text colors for readability
-- **Dark Scrollbar** - Custom styled to match theme
-- **Smooth Transitions** - All colors fade smoothly between modes
+The extension recognizes these phone number formats:
+- `33-614956164` (country code - local number)
+- `+33-614956164` (with + prefix)
+- `380-631234567` (2-3 digit country codes)
 
-## 🤝 Contributing
+### Business Hours Logic
 
-Contributions are welcome! Here's how you can help:
+- **Available** ✅ : Current local time is between 10 AM - 7 PM
+- **Outside Hours** ⏰ : Current time is outside business hours
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Timezone Categories
 
-### Ideas for Contributions
-- ✨ Add flag emojis/icons for countries
-- ⭐ Implement favorite countries feature
-- 🔄 Add timezone converter/comparison tool
-- 🌍 Support for multiple languages (i18n)
-- 📱 Improve mobile responsiveness
-- 📤 Export country data functionality
-- ⌨️ Keyboard shortcuts (Ctrl+K for search)
-- 📝 Search history with recent searches
-- 🗺️ Add country maps integration
-- 📊 Show more detailed statistics
+The extension shows the closest reference timezone:
+- 🇮🇳 **India (IST)** - Asia/Kolkata
+- 🇺🇸 **US (EST)** - America/New_York
+- 🇬🇧 **UK (GMT)** - Europe/London
 
-## 🐛 Bug Reports
+## 🔧 Permissions Explained
 
-Found a bug? Please open an issue with:
-- Description of the bug
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-- Screenshots (if applicable)
-- Browser version and OS
+The extension requires these permissions:
 
-## 📝 Changelog
+- `storage` - Save your dark mode preference
+- `https://app.hubspot.com/*` - Access HubSpot pages to detect phone numbers
 
-### Version 1.0 (Current)
-- ✅ Initial release
-- ✅ Smart search functionality
-- ✅ Real-time clock display
-- ✅ Dark mode with persistence
-- ✅ 240+ countries database
-- ✅ Beautiful gradient UI
-- ✅ Smooth animations
-- ✅ Debounced search
-- ✅ Theme toggle with saved preferences
+**Privacy Note:** The extension only reads phone numbers from the page content. No data is sent to external servers.
 
-## 📝 License
+## 🎨 Dark Mode
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- Toggle between light and dark themes using the moon/sun icon
+- Automatically detects your system preference
+- Your preference is saved for future use
+
+## 🛠️ Troubleshooting
+
+### Notification not showing on HubSpot?
+
+1. Make sure you're on a contact record page (URL contains `/contacts/` and `/record/`)
+2. Verify the phone number format includes a country code before a dash (e.g., `33-614956164`)
+3. Check browser console for any errors (F12 > Console)
+4. Refresh the HubSpot page after installing the extension
+
+### Extension not loading?
+
+1. Verify all files are in the same folder
+2. Check that `manifest.json` is valid JSON
+3. Ensure you have icon files or remove icon references from manifest
+4. Try reloading the extension in `chrome://extensions/`
+
+## 📝 Technical Details
+
+### How It Works
+
+1. **Content Script** (`content.js`) runs on HubSpot contact pages
+2. Scans page content for phone number patterns
+3. Extracts country code and matches it against 240+ countries database
+4. Calculates current time and business hours in that timezone
+5. Displays elegant notification with all relevant information
+
+### Performance
+
+- Lightweight: Runs only on HubSpot contact pages
+- Smart detection: Uses optimized regex patterns
+- Auto-hide: Notification disappears after 10 seconds
+- No external API calls: All data is local
+
+## 🎯 Use Cases
+
+- **Sales teams** - Know the best time to call international contacts
+- **Customer support** - Check if customers are in business hours
+- **Account managers** - Plan calls with global clients
+- **Anyone** - Quick timezone reference for international contacts
+
+## 🔄 Updates in This Version
+
+### v1.1.0 (Current)
+- ✨ NEW: Automatic phone number detection on HubSpot
+- ✨ NEW: Real-time business hours notifications
+- ✨ NEW: Beautiful slide-in notifications
+- 🎨 Enhanced UI with status indicators
+- 🐛 Bug fixes and performance improvements
+
+### v1.0.0
+- Initial release with country search
+- Dark mode support
+- 240+ countries database
+
+## 📄 License
+
+This extension is provided as-is for personal and commercial use.
 
 ## 👨‍💻 Author
 
-**Your Name**
-- GitHub: [@Jay-Dee-Senwarkr](https://github.com/Jay-Deep-Senwarkr)
-- LinkedIn: [Jaydeep-Senwarkr](https://www.linkedin.com/in/jaydeep-senwarkr/)
-- Email: jaydeepsenwarkr@gmail.com
+Created by Jaydeep
 
-## 🙏 Acknowledgments
+---
 
-- Country data sourced from public databases
-- Icons created with basic SVG shapes
-- Inspired by modern design principles and Material Design
-- Color palette inspired by Tailwind CSS
-- Dark mode implementation following best practices
+**Happy Calling! 📞🌍**
 
-## 📈 Roadmap
-
-### Completed ✅
-- [x] Basic search functionality
-- [x] Real-time clock display
-- [x] Dark mode implementation
-- [x] Theme persistence
-- [x] Beautiful UI with animations
-- [x] Debounced search
-
-### In Progress 🚧
-- [ ] Add to Chrome Web Store
-- [ ] Add comprehensive screenshots
-
-### Planned 📋
-- [ ] Country flags integration
-- [ ] Timezone comparison tool
-- [ ] Favorite countries feature
-- [ ] Recent searches history
-- [ ] Keyboard shortcuts (Ctrl+K, Escape)
-- [ ] Export data to CSV/JSON
-- [ ] Multi-language support (i18n)
-- [ ] Country maps integration
-- [ ] Offline mode support
-- [ ] Search suggestions/autocomplete
-- [ ] Custom themes beyond light/dark
-- [ ] Mobile app version
-
-## 💬 Support
-
-If you like this project, please give it a ⭐️!
-
-### Get Help
-- 📧 Email: support@example.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/country-time-finder/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/country-time-finder/discussions)
-
-## 📊 Stats
-
-- **Countries**: 240+
-- **Data Points**: 15+ per country
-- **File Size**: ~500KB (including all data)
-- **Performance**: <150ms search response time
-- **Supported Browsers**: Chrome, Edge, Brave (Chromium-based)
-
-## 🔒 Privacy
-
-This extension:
-- ✅ Does NOT collect any personal data
-- ✅ Does NOT track your searches
-- ✅ Does NOT require internet connection (except for extension updates)
-- ✅ Only stores your theme preference locally
-- ✅ Does NOT send data to external servers
-- ✅ Open source - verify the code yourself!
-
-## 🌟 Show Your Support
-
-<a href="https://www.star-history.com/#Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Jay-Deep-Senwarkr/country_code_chrome_extension&type=date&legend=top-left" />
- </picture>
-</a>
+Need help? Have suggestions? Feel free to reach out!
