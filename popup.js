@@ -3,6 +3,7 @@ let results = [];
 let timeUpdateInterval;
 let searchDebounceTimer;
 let isDarkMode = false;
+let isHubspotFeatureEnabled = true;
 
 // Reference time zones
 const REFERENCE_TIMEZONES = {
@@ -14,11 +15,13 @@ const REFERENCE_TIMEZONES = {
 function init() {
   renderApp();
   detectSystemTheme();
+  loadFeatureState();
   
   // Add event listeners after DOM is rendered
   setTimeout(() => {
     const searchInput = document.getElementById('search-input');
     const themeToggle = document.getElementById('theme-toggle');
+    const featureToggle = document.getElementById('feature-toggle');
     
     if (searchInput) {
       searchInput.addEventListener('input', handleSearch);
@@ -28,7 +31,49 @@ function init() {
     if (themeToggle) {
       themeToggle.addEventListener('click', toggleTheme);
     }
+    
+    if (featureToggle) {
+      featureToggle.addEventListener('click', toggleHubspotFeature);
+    }
   }, 0);
+}
+
+function loadFeatureState() {
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.local.get(['hubspotFeatureEnabled'], (result) => {
+      isHubspotFeatureEnabled = result.hubspotFeatureEnabled !== false; // Default to true
+      console.log('Country Time Finder: Loaded feature state:', isHubspotFeatureEnabled);
+      updateFeatureToggleUI();
+    });
+  }
+}
+
+function toggleHubspotFeature() {
+  isHubspotFeatureEnabled = !isHubspotFeatureEnabled;
+  console.log('Country Time Finder: Toggling feature to:', isHubspotFeatureEnabled);
+  
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.local.set({ hubspotFeatureEnabled: isHubspotFeatureEnabled }, () => {
+      console.log('Country Time Finder: Feature state saved:', isHubspotFeatureEnabled);
+    });
+  }
+  
+  updateFeatureToggleUI();
+}
+
+function updateFeatureToggleUI() {
+  const toggle = document.getElementById('feature-toggle');
+  if (toggle) {
+    if (isHubspotFeatureEnabled) {
+      toggle.classList.add('active');
+      console.log('Country Time Finder: Toggle UI set to active');
+    } else {
+      toggle.classList.remove('active');
+      console.log('Country Time Finder: Toggle UI set to inactive');
+    }
+  } else {
+    console.log('Country Time Finder: Toggle element not found in DOM');
+  }
 }
 
 function detectSystemTheme() {
@@ -386,6 +431,17 @@ function renderApp() {
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
+          </div>
+          <div class="feature-toggle-container">
+            <div class="feature-toggle-label">
+              <svg class="hubspot-icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.5 2h-13C4.673 2 4 2.673 4 3.5v17c0 .827.673 1.5 1.5 1.5h13c.827 0 1.5-.673 1.5-1.5v-17c0-.827-.673-1.5-1.5-1.5zm-6.5 3c.828 0 1.5.672 1.5 1.5S12.828 8 12 8s-1.5-.672-1.5-1.5S11.172 5 12 5zm0 14c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6zm0-10c-2.206 0-4 1.794-4 4s1.794 4 4 4 4-1.794 4-4-1.794-4-4-4z"/>
+              </svg>
+              <span>HubSpot Integration</span>
+            </div>
+            <div class="toggle-switch active" id="feature-toggle">
+              <div class="toggle-slider"></div>
+            </div>
           </div>
         </div>
       </div>

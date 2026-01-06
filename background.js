@@ -10,10 +10,18 @@ chrome.runtime.onInstalled.addListener((details) => {
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     chrome.storage.local.set({ 
       darkMode: isDarkMode,
-      themePreferenceSet: false // User hasn't manually set preference yet
+      themePreferenceSet: false, // User hasn't manually set preference yet
+      hubspotFeatureEnabled: true // Feature enabled by default
     });
   } else if (details.reason === 'update') {
     console.log('Country Time Finder updated to version:', chrome.runtime.getManifest().version);
+    
+    // Ensure hubspotFeatureEnabled is set for existing users
+    chrome.storage.local.get(['hubspotFeatureEnabled'], (result) => {
+      if (result.hubspotFeatureEnabled === undefined) {
+        chrome.storage.local.set({ hubspotFeatureEnabled: true });
+      }
+    });
   }
 });
 

@@ -1,16 +1,20 @@
 // Content script for detecting phone numbers on HubSpot pages
 // This script runs on HubSpot contact pages and shows timezone indicators
 
-// Check if country code has timezone information
+// Enhanced country finder that also tries variations
 function findCountryByPhoneCode(phoneCode) {
   // Remove leading + or any non-numeric characters
-  const cleanCode = phoneCode.replace(/\D/g, '');
+  const cleanCode = String(phoneCode).replace(/\D/g, '');
+  
+  if (!cleanCode) return null;
   
   // Find matching country in COUNTRIES array
-  return COUNTRIES.find(country => {
+  const country = COUNTRIES.find(country => {
     const countryPhoneCode = String(country['Phone Code']).replace(/\D/g, '');
     return countryPhoneCode === cleanCode;
   });
+  
+  return country || null;
 }
 
 // Calculate timezone status and return icon
@@ -109,35 +113,55 @@ function getTimezoneIcon(country) {
   }
 }
 
-// Parse phone number and extract country code
+// Parse phone number and extract country code - IMPROVED VERSION
+// Parse phone number and extract country code - UNIVERSAL VERSION
 function parsePhoneNumber(phoneText) {
   // Remove common formatting and clean up
   const cleaned = phoneText.trim();
   
-  // Patterns to extract country code - now more flexible
-  const patterns = [
-    /^\+?(\d{1,4})[-\s]+(\d+[-\s]*\d*)$/,        // +91 97854-78207 or +1 902-481-1350
-    /^\+?(\d{1,4})\s+(\d+\s+\d+)$/,              // +91 96469 97676 or +31 6 42437939
-    /^\+?(\d{1,4})[-\s](\d+)$/,                  // +39-3493433405 or 39-3493433405
-    /^\+?(\d{1,4})\s+(\d+)$/,                    // +39 3493433405
-    /^\(?\+?(\d{1,4})\)?[-\s]?(\d+)$/,          // (+39) 3493433405
-    /^\+?(\d{1,4})[-\s]*(\d{2,})[-\s]*(\d+)$/   // Flexible pattern for various formats
-  ];
+  // Extract all digits from the string
+  const allDigits = cleaned.replace(/\D/g, '');
   
-  for (const pattern of patterns) {
-    const match = cleaned.match(pattern);
-    if (match) {
-      const countryCode = match[1];
-      // Validate country code length (1-4 digits)
-      if (countryCode && countryCode.length >= 1 && countryCode.length <= 4) {
+  if (!allDigits || allDigits.length < 4) {
+    return null; // Too short to be a valid phone number
+  }
+  
+  // Strategy: Try all possible country code lengths (4, 3, 2, 1 digits)
+  // and validate each against our country database
+  // This works for ANY format since we're just extracting digits
+  
+  for (let codeLength = 4; codeLength >= 1; codeLength--) {
+    const potentialCode = allDigits.substring(0, codeLength);
+    
+    // Verify this is a valid country code by checking against our database
+    const country = findCountryByPhoneCode(potentialCode);
+    
+    if (country) {
+      const remainingDigits = allDigits.substring(codeLength);
+      
+      // Validation: Most phone numbers have at least 4-15 digits after country code
+      // This prevents false positives like "1234" being detected as country code "1"
+      if (remainingDigits.length >= 4 && allDigits.length <= 18) {
+        console.log(`Country Time Finder: Matched ${cleaned} → Country code: ${potentialCode} (${country['Country Name']})`);
         return {
-          countryCode: countryCode,
+          countryCode: potentialCode,
+          fullNumber: cleaned
+        };
+      }
+      
+      // Special case for country code 1 (US/Canada) - needs at least 10 total digits
+      if (potentialCode === '1' && allDigits.length >= 10 && allDigits.length <= 15) {
+        console.log(`Country Time Finder: Matched ${cleaned} → Country code: 1 (US/Canada)`);
+        return {
+          countryCode: potentialCode,
           fullNumber: cleaned
         };
       }
     }
   }
   
+  // If we couldn't find a match, log it for debugging
+  console.log(`Country Time Finder: Could not parse: ${cleaned} (digits: ${allDigits})`);
   return null;
 }
 
@@ -163,6 +187,47 @@ function addIconToElement(element, icon, message, country) {
   
   // Append icon to element
   element.appendChild(iconSpan);
+}
+
+// Add color-coded background to table row based on status
+function addRowBackground(row, iconData) {
+  if (!row || !iconData) {
+    console.log('Country Time Finder: addRowBackground called with missing row or iconData');
+    return;
+  }
+  
+  console.log(`Country Time Finder: Setting background for row with status: ${iconData.status}`);
+  
+  // Remove any existing timezone background class
+  row.classList.remove('tz-available', 'tz-soon', 'tz-ended', 'tz-unavailable');
+  
+  // Add CSS class and inline styles based on status
+  let backgroundColor, borderLeft;
+  
+  if (iconData.status === 'available') {
+    row.classList.add('tz-available');
+    backgroundColor = 'rgba(209, 250, 229, 0.4)'; // Slightly more opaque
+    borderLeft = '4px solid #10b981';
+  } else if (iconData.status === 'soon') {
+    row.classList.add('tz-soon');
+    backgroundColor = 'rgba(254, 243, 199, 0.4)';
+    borderLeft = '4px solid #f59e0b';
+  } else if (iconData.status === 'ended') {
+    row.classList.add('tz-ended');
+    backgroundColor = 'rgba(219, 234, 254, 0.4)';
+    borderLeft = '4px solid #3b82f6';
+  } else {
+    row.classList.add('tz-unavailable');
+    backgroundColor = 'rgba(254, 226, 226, 0.3)';
+    borderLeft = '4px solid #ef4444';
+  }
+  
+  // Apply styles with !important to override HubSpot's styles
+  row.style.setProperty('background-color', backgroundColor, 'important');
+  row.style.setProperty('border-left', borderLeft, 'important');
+  row.style.setProperty('transition', 'all 0.3s ease', 'important');
+  
+  console.log(`Country Time Finder: Applied background color: ${backgroundColor}, border: ${borderLeft}`);
 }
 
 // Process table view phone numbers
@@ -191,11 +256,33 @@ function processTablePhoneNumbers() {
           const iconData = getTimezoneIcon(country);
           
           if (iconData) {
-            console.log(`Country Time Finder: Adding ${iconData.icon} icon`);
+            console.log(`Country Time Finder: Adding ${iconData.icon} icon with ${iconData.status} background`);
             // Add icon after the phone number span
             const parentElement = phoneLink.parentElement;
             if (parentElement) {
               addIconToElement(parentElement, iconData.icon, iconData.message, country);
+            }
+            
+            // Add colored background to the entire row
+            // Try multiple methods to find the row
+            let row = cell.closest('tr');
+            
+            if (!row) {
+              // Fallback: traverse up manually
+              let parent = cell.parentElement;
+              while (parent && parent.tagName !== 'TR' && parent !== document.body) {
+                parent = parent.parentElement;
+              }
+              if (parent && parent.tagName === 'TR') {
+                row = parent;
+              }
+            }
+            
+            if (row) {
+              console.log(`Country Time Finder: Found row, applying ${iconData.status} background`);
+              addRowBackground(row, iconData);
+            } else {
+              console.log('Country Time Finder: ERROR - Could not find parent row for cell:', cell);
             }
           }
         } else {
@@ -311,7 +398,91 @@ function processAllPhoneNumbers() {
   }
 }
 
-// Initialize on page load
+// Track if we've already processed elements to avoid duplicates
+let processedElements = new WeakSet();
+
+// Feature toggle state
+let isFeatureEnabled = true;
+let featureStateLoaded = false;
+
+// Check feature toggle state from storage
+function loadFeatureState() {
+  chrome.storage.local.get(['hubspotFeatureEnabled'], (result) => {
+    isFeatureEnabled = result.hubspotFeatureEnabled !== false; // Default to true
+    featureStateLoaded = true;
+    console.log('Country Time Finder: Feature enabled:', isFeatureEnabled);
+    
+    if (isFeatureEnabled) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        quickProcess();
+      }, 100);
+    }
+  });
+}
+
+// Initialize feature state
+loadFeatureState();
+
+// Listen for toggle changes
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local' && changes.hubspotFeatureEnabled) {
+    isFeatureEnabled = changes.hubspotFeatureEnabled.newValue;
+    console.log('Country Time Finder: Feature toggled to:', isFeatureEnabled);
+    
+    if (isFeatureEnabled) {
+      // Re-enable: process phone numbers
+      setTimeout(() => {
+        quickProcess();
+      }, 100);
+    } else {
+      // Disable: remove all icons, indicators, and row backgrounds
+      document.querySelectorAll('.timezone-icon').forEach(el => el.remove());
+      document.querySelectorAll('.timezone-status-indicator').forEach(el => el.remove());
+      
+      // Remove row backgrounds
+      document.querySelectorAll('tr.tz-available, tr.tz-soon, tr.tz-ended, tr.tz-unavailable').forEach(row => {
+        row.classList.remove('tz-available', 'tz-soon', 'tz-ended', 'tz-unavailable');
+        row.style.backgroundColor = '';
+        row.style.borderLeft = '';
+      });
+      
+      console.log('Country Time Finder: All indicators and backgrounds removed');
+    }
+  }
+});
+
+// Improved processing with instant response
+function quickProcess() {
+  // Check if feature is enabled
+  if (!featureStateLoaded) {
+    console.log('Country Time Finder: Feature state not loaded yet, waiting...');
+    return;
+  }
+  
+  if (!isFeatureEnabled) {
+    console.log('Country Time Finder: Feature is disabled, skipping...');
+    return;
+  }
+  
+  console.log('Country Time Finder: Quick processing...');
+  
+  // Remove old icons and backgrounds to refresh
+  document.querySelectorAll('.timezone-icon').forEach(el => el.remove());
+  document.querySelectorAll('.timezone-status-indicator').forEach(el => el.remove());
+  
+  // Clear all row backgrounds before re-processing
+  document.querySelectorAll('tr.tz-available, tr.tz-soon, tr.tz-ended, tr.tz-unavailable').forEach(row => {
+    row.classList.remove('tz-available', 'tz-soon', 'tz-ended', 'tz-unavailable');
+    row.style.backgroundColor = '';
+    row.style.borderLeft = '';
+  });
+  
+  // Process immediately
+  processAllPhoneNumbers();
+}
+
+// Initialize on page load with faster response
 function initialize() {
   // Check if we're on a HubSpot contact page
   const isContactsPage = window.location.hostname.includes('app.hubspot.com') && 
@@ -321,24 +492,41 @@ function initialize() {
     console.log('Country Time Finder: Monitoring HubSpot contacts page');
     console.log('Country Time Finder: Current URL:', window.location.href);
     
-    // Wait for page to fully load
+    // Quick initial scan - reduced from 3 seconds to 500ms
     setTimeout(() => {
       console.log('Country Time Finder: Starting initial scan...');
-      processAllPhoneNumbers();
-    }, 3000);
+      quickProcess();
+    }, 500);
     
-    // Monitor for dynamic content changes (HubSpot loads data dynamically)
-    let scanCount = 0;
-    const maxScans = 3;
+    // Faster follow-up scans
+    setTimeout(() => quickProcess(), 1500);
+    setTimeout(() => quickProcess(), 3000);
     
+    // Monitor for dynamic content changes with faster response
+    let debounceTimer;
     const observer = new MutationObserver((mutations) => {
-      if (scanCount < maxScans) {
-        clearTimeout(window.phoneNumberCheckTimeout);
-        window.phoneNumberCheckTimeout = setTimeout(() => {
-          console.log('Country Time Finder: Content changed, rescanning...');
-          processAllPhoneNumbers();
-          scanCount++;
-        }, 2000);
+      // Check if the mutation is relevant (contains phone-related changes)
+      const isRelevant = mutations.some(mutation => {
+        return Array.from(mutation.addedNodes).some(node => {
+          if (node.nodeType === 1) { // Element node
+            return node.querySelector && (
+              node.querySelector('[data-table-external-id*="phone"]') ||
+              node.querySelector('[data-test-id*="phone"]') ||
+              node.matches('[data-table-external-id*="phone"]') ||
+              node.matches('[data-test-id*="phone"]')
+            );
+          }
+          return false;
+        });
+      });
+      
+      if (isRelevant) {
+        clearTimeout(debounceTimer);
+        // Reduced from 2 seconds to 300ms for faster response
+        debounceTimer = setTimeout(() => {
+          console.log('Country Time Finder: Relevant content changed, rescanning...');
+          quickProcess();
+        }, 300);
       }
     });
     
@@ -347,18 +535,14 @@ function initialize() {
       subtree: true
     });
     
-    // Also try scanning at intervals for the first 15 seconds
-    let intervalCount = 0;
-    const scanInterval = setInterval(() => {
-      intervalCount++;
-      console.log('Country Time Finder: Interval scan #' + intervalCount);
-      processAllPhoneNumbers();
-      
-      if (intervalCount >= 3) {
-        clearInterval(scanInterval);
-      }
-    }, 5000);
+    // Keep observers active indefinitely
+    window.countryTimeFinderObserver = observer;
   }
+}
+
+// Clean up old observer if exists
+if (window.countryTimeFinderObserver) {
+  window.countryTimeFinderObserver.disconnect();
 }
 
 // Run on page load
@@ -368,13 +552,14 @@ if (document.readyState === 'loading') {
   initialize();
 }
 
-// Also run when navigation happens (for SPAs like HubSpot)
+// Also run when navigation happens (for SPAs like HubSpot) - faster response
 let lastUrl = location.href;
 new MutationObserver(() => {
   const url = location.href;
   if (url !== lastUrl) {
     lastUrl = url;
     console.log('Country Time Finder: URL changed, reinitializing...');
-    setTimeout(initialize, 1000);
+    // Reduced from 1 second to 200ms
+    setTimeout(initialize, 200);
   }
 }).observe(document, { subtree: true, childList: true });

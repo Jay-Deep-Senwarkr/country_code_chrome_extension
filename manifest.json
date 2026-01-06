@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Country Time Finder",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Instantly search 240+ countries by name, code, or phone number. View real-time local times, phone codes, ISO codes, and more. Beautiful dark mode included.",
   "author": "Jaydeep",
   "icons": {
